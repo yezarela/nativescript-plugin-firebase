@@ -47,7 +47,7 @@ dependencies {
 //    compile "com.google.android.gms:play-services-auth:$googlePlayServicesVersion"
 
     // Uncomment if you want to use 'Invites'
-//    compile 'com.google.firebase:firebase-invites:10.2.1'
+//    compile 'com.google.firebase:firebase-invites:10.2.+'
 
 }
 

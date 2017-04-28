@@ -1779,58 +1779,78 @@ firebase.sendInvitation = function (arg) {
   return new Promise(function (resolve, reject) {
     try {
 
+      console.log('checking com.google.android.gms.appinvite')
       if (typeof(com.google.android.gms.appinvite) === "undefined") {
         reject("Make sure firebase-invites is in the plugin's include.gradle");
         return;
       }
 
+      console.log('checking mandatory arguments')
       if (!arg.message || !arg.title) {
         reject("The mandatory 'message' or 'title' argument is missing");
         return;
       }
 
-      var firebaseInviteIntent = new com.google.android.gms.appinvite.AppInviteInvitation.IntentBuilder(arg.title).setMessage(arg.message);
-      
-      if (arg.deepLink) {
-        firebaseInviteIntent.setDeepLink(decodeURIComponent(arg.deepLink))
-      }
+      console.log('creating new Invite intent')
+      var firebaseInviteIntent = new com.google.android.gms.appinvite.AppInviteInvitation.IntentBuilder(arg.title).setMessage(arg.message).build()
+      // console.log('checking arg.deepLink')
+      // if (arg.deepLink) {
+      //   firebaseInviteIntent.setDeepLink(arg.deepLink)
+      // }
 
-      if (arg.callToActionText) {
-        firebaseInviteIntent.setCallToActionText(arg.callToActionText)
-      }
+      // console.log('checking arg.callToActionText')
+      // if (arg.callToActionText) {
+      //   firebaseInviteIntent.setCallToActionText(arg.callToActionText)
+      // }
 
-      if (arg.customImage) {
-        firebaseInviteIntent.setCustomImage(decodeURIComponent(arg.customImage))
-      }
+      // console.log('checking arg.customImage')
+      // if (arg.customImage) {
+      //   firebaseInviteIntent.setCustomImage(arg.customImage)
+      // }
 
-      firebaseInviteIntent.build()
+      // console.log('intent build')
+      // firebaseInviteIntent.build()
 
-      appModule.android.currentContext.startActivityForResult(firebaseInviteIntent, REQUEST_INVITE_INTENT_ID);
+      console.log('appModule startActivityForResult')
+      console.log('appModule.android.currentContext', appModule.android.currentContext)
+      console.log('appModule.android.foregroundActivity', appModule.android.foregroundActivity)
+      console.log('appModule.AndroidApplication.foregroundActivity', appModule.AndroidApplication.foregroundActivity)
+      appModule.android.foregroundActivity.startActivityForResult(firebaseInviteIntent, REQUEST_INVITE_INTENT_ID);
 
-      appModule.android.on(appModule.AndroidApplication.activityResultEvent, function(eventData) {
-          if (eventData.requestCode === REQUEST_INVITE_INTENT_ID) {
-              if (eventData.resultCode == android.app.Activity.RESULT_OK) {
+      console.log('appModule on activityResultEvent')
+      // appModule.android.on(appModule.AndroidApplication.activityResultEvent, function(eventData) {
+      appModule.android.onActivityResult = function (requestCode, resultCode, intent) {
+        console.log('requestCode', requestCode)
+          if (requestCode === REQUEST_INVITE_INTENT_ID) {
+            console.log('resultCode', resultCode)
+              if (resultCode == android.app.Activity.RESULT_OK) {
                   // Get the invitation IDs of all sent messages
-                  var ids = com.google.android.gms.appinvite.AppInviteInvitation.getInvitationIds(eventData.resultCode, eventData.intent);
+                  var ids = com.google.android.gms.appinvite.AppInviteInvitation.getInvitationIds(resultCode, intent);
+                  console.log('getInvitationIds',ids)
+                  
                   try {
                     var result = {
                         count: ids.length,
                         invitationIds: JSON.parse(ids)
                       }
+                      console.log('result',JSON.stringify(result))
                     resolve(result)
                   } catch (e) {
+                    console.log('error 1',e)
                     reject(e.getMessage())
                   }
                   
               } else {
-                  if (eventData.resultCode === 3) {
+                console.log('error 2')
+                  if (resultCode === 3) {
                     reject("Resultcode 3, see http://stackoverflow.com/questions/37883664/result-code-3-when-implementing-appinvites");
+                    // http://stackoverflow.com/questions/8576732/there-is-no-debug-keystore-in-android-folder
                   } else {
-                    reject("Resultcode: " + eventData.resultCode);
+                    reject("Resultcode: " + resultCode);
                   }
               }
           }
-        });
+        };
       
     } catch (ex) {
       console.log("Error in firebase.sendInvitation: " + ex);

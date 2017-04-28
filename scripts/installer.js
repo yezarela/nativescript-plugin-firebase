@@ -3,7 +3,8 @@ var path = require('path');
 var prompt = require('prompt-lite');
 
 // Default settings for using ios and android with Firebase
-var usingiOS = false, usingAndroid = false;
+var usingiOS = false,
+    usingAndroid = false;
 
 // The directories where the Podfile and include.gradle are stored
 var directories = {
@@ -17,23 +18,27 @@ var appRoot = "../../";
 var pluginConfigFile = "firebase.nativescript.json";
 var pluginConfigPath = path.join(appRoot, pluginConfigFile);
 var config = {};
+
 function mergeConfig(result) {
     for (var key in result) {
         config[key] = isSelected(result[key]);
     }
 }
+
 function saveConfig() {
     fs.writeFileSync(pluginConfigPath, JSON.stringify(config, null, 4));
 }
+
 function readConfig() {
     try {
         config = JSON.parse(fs.readFileSync(pluginConfigPath));
-    } catch(e) {
+    } catch (e) {
         console.log("Failed reading " + pluginConfigFile);
         console.log(e);
         config = {};
     }
 }
+
 function isInteractive() {
     return process.stdin && process.stdin.isTTY && process.stdout && process.stdout.isTTY;
 }
@@ -41,10 +46,10 @@ function isInteractive() {
 // workaround for https://github.com/NativeScript/nativescript-cli/issues/2521 (2.5.0 only)
 var nativeScriptVersion = "";
 try {
-  nativeScriptVersion = __webpack_require__(/*! child_process */ 2).execSync('nativescript --version');
+    nativeScriptVersion = __webpack_require__( /*! child_process */ 2).execSync('nativescript --version');
 } catch (err) {
-  // On some environments nativescript is not in the PATH
-  // Ignore the error
+    // On some environments nativescript is not in the PATH
+    // Ignore the error
 }
 
 var isNativeScriptCLI250 = nativeScriptVersion.indexOf("2.5.0") !== -1;
@@ -81,7 +86,7 @@ function askiOSPrompt() {
         name: 'using_ios',
         description: 'Are you using iOS (y/n)',
         default: 'y'
-    }, function (err, result) {
+    }, function(err, result) {
         if (err) {
             return console.log(err);
         }
@@ -90,6 +95,7 @@ function askiOSPrompt() {
         askAndroidPrompt();
     });
 }
+
 function askiOSPromptResult(result) {
     if (isSelected(result.using_ios)) {
         usingiOS = true;
@@ -104,7 +110,7 @@ function askAndroidPrompt() {
         name: 'using_android',
         description: 'Are you using Android (y/n)',
         default: 'y'
-    }, function (err, result) {
+    }, function(err, result) {
         if (err) {
             return console.log(err);
         }
@@ -117,6 +123,7 @@ function askAndroidPrompt() {
         }
     });
 }
+
 function askAndroidPromptResult(result) {
     if (isSelected(result.using_android)) {
         usingAndroid = true;
@@ -152,10 +159,14 @@ function promptQuestions() {
         description: 'Are you using Firebase Google Authentication (y/n)',
         default: 'n'
     }, {
-      name: 'admob',
-      description: 'Are you using AdMob (y/n)',
-      default: 'n'
-    }], function (err, result) {
+        name: 'admob',
+        description: 'Are you using AdMob (y/n)',
+        default: 'n'
+    }, {
+        name: 'invites',
+        description: 'Are you using Firebase Invites (y/n)',
+        default: 'n'
+    }], function(err, result) {
         if (err) {
             return console.log(err);
         }
@@ -164,6 +175,7 @@ function promptQuestions() {
         askSaveConfigPrompt();
     });
 }
+
 function promptQuestionsResult(result) {
     if (usingiOS) {
         writePodFile(result);
@@ -190,7 +202,7 @@ function askSaveConfigPrompt() {
         name: 'save_config',
         description: 'Do you want to save the selected configuration. Reinstalling the dependency will reuse the setup from: ' + pluginConfigFile + '. CI will be easier. (y/n)',
         default: 'y'
-    }, function (err, result) {
+    }, function(err, result) {
         if (err) {
             return console.log(err);
         }
@@ -206,12 +218,12 @@ function askSaveConfigPrompt() {
  * @param {any} result The answers to the micro-service prompts
  */
 function writePodFile(result) {
-    if(!fs.existsSync(directories.ios)) {
+    if (!fs.existsSync(directories.ios)) {
         fs.mkdirSync(directories.ios);
     }
     try {
         fs.writeFileSync(directories.ios + '/Podfile',
-`pod 'Firebase', '~> 3.13.0'
+            `pod 'Firebase', '~> 3.13.0'
 pod 'Firebase/Database'
 pod 'Firebase/Auth'
 
@@ -237,7 +249,7 @@ pod 'Firebase/Auth'
 # Uncomment if you want to enable Google Authentication
 ` + (isSelected(result.google_auth) ? `` : `#`) + `pod 'GoogleSignIn'`);
         console.log('Successfully created iOS (Pod) file.');
-    } catch(e) {
+    } catch (e) {
         console.log('Failed to create iOS (Pod) file.');
         console.log(e);
     }
@@ -249,12 +261,12 @@ pod 'Firebase/Auth'
  * @param {any} result The answers to the micro-service prompts
  */
 function writeGradleFile(result) {
-     if(!fs.existsSync(directories.android)) {
+    if (!fs.existsSync(directories.android)) {
         fs.mkdirSync(directories.android);
     }
     try {
         fs.writeFileSync(directories.android + '/include.gradle',
-`
+            `
 android {
     productFlavors {
         "fireb" {
@@ -302,12 +314,15 @@ dependencies {
     // Uncomment if you need Google Sign-In Authentication
     ` + (isSelected(result.google_auth) ? `` : `//`) + ` compile "com.google.android.gms:play-services-auth:$googlePlayServicesVersion"
 
+    // Uncomment if you need Firebase Invites
+    ` + (isSelected(result.invites) ? `` : `//`) + ` compile "com.google.firebase:firebase-invites:10.2.+"
+
 }
 
 apply plugin: "com.google.gms.google-services"
 `);
         console.log('Successfully created Android (include.gradle) file.');
-    } catch(e) {
+    } catch (e) {
         console.log('Failed to create Android (include.gradle) file.');
         console.log(e);
     }
@@ -320,7 +335,7 @@ function writeGoogleServiceCopyHook() {
     console.log("Install google-service.json copy hook.");
     try {
         var scriptContent =
-`
+            `
 var path = require("path");
 var fs = require("fs");
 
@@ -344,7 +359,7 @@ module.exports = function() {
             fs.mkdirSync(afterPrepareDirPath);
         }
         fs.writeFileSync(scriptPath, scriptContent);
-    } catch(e) {
+    } catch (e) {
         console.log("Failed to install google-service.json copy hook.");
         console.log(e);
     }
@@ -354,7 +369,7 @@ function writeGoogleServiceGradleHook() {
     console.log("Install firebase-build-gradle hook.");
     try {
         var scriptContent =
-`
+            `
 var path = require("path");
 var fs = require("fs");
 
@@ -394,7 +409,7 @@ module.exports = function() {
 `;
         var scriptPath = path.join(appRoot, "hooks", "after-prepare", "firebase-build-gradle.js");
         fs.writeFileSync(scriptPath, scriptContent);
-    } catch(e) {
+    } catch (e) {
         console.log("Failed to install firebase-build-gradle hook.");
         console.log(e);
     }

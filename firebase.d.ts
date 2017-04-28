@@ -481,17 +481,17 @@ export interface SendInvitationOptions {
     /**
      * Sets the link into your app that is sent with invitations.
      */
-    deepLink: string;
+    deepLink?: string;
 
     /**
      * Sets the call-to-action text of the button rendered in email invitations. Cannot exceed 32 characters.
      */
-    callToActionText: string;
+    callToActionText?: string;
 
     /**
      * Sets the URL of a custom image to include in email invitations. The image must be square and around 600x600 pixels. The image can be no larger than 4000x4000 pixels.
      */
-    customImage: string;
+    customImage?: string;
 }
 
 export function init(options?: InitOptions): Promise<any>;
