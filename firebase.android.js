@@ -1806,8 +1806,32 @@ firebase.sendInvitation = function (arg) {
       firebaseInviteIntent.build()
 
       appModule.android.currentContext.startActivityForResult(firebaseInviteIntent, REQUEST_INVITE_INTENT_ID);
+
+      appModule.android.on(appModule.AndroidApplication.activityResultEvent, function(eventData) {
+          if (eventData.requestCode === REQUEST_INVITE_INTENT_ID) {
+              if (eventData.resultCode == android.app.Activity.RESULT_OK) {
+                  // Get the invitation IDs of all sent messages
+                  var ids = com.google.android.gms.appinvite.AppInviteInvitation.getInvitationIds(eventData.resultCode, eventData.intent);
+                  try {
+                    var result = {
+                        count: ids.length,
+                        invitationIds: JSON.parse(ids)
+                      }
+                    resolve(result)
+                  } catch (e) {
+                    reject(e.getMessage())
+                  }
+                  
+              } else {
+                  if (eventData.resultCode === 3) {
+                    reject("Resultcode 3, see http://stackoverflow.com/questions/37883664/result-code-3-when-implementing-appinvites");
+                  } else {
+                    reject("Resultcode: " + eventData.resultCode);
+                  }
+              }
+          }
+        });
       
-      resolve();
     } catch (ex) {
       console.log("Error in firebase.sendInvitation: " + ex);
       reject(ex);
