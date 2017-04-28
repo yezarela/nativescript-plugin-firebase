@@ -13,6 +13,7 @@ firebase._facebookAccessToken = null;
 
 var fbCallbackManager = null;
 var GOOGLE_SIGNIN_INTENT_ID = 123;
+var REQUEST_INVITE_INTENT_ID = 48
 
 var gson = typeof(com.google.gson) === "undefined" ? null : new com.google.gson.Gson();
 
@@ -927,6 +928,7 @@ firebase.login = function (arg) {
         firebase._mGoogleApiClient = new com.google.android.gms.common.api.GoogleApiClient.Builder(com.tns.NativeScriptApplication.getInstance())
             .addOnConnectionFailedListener(onConnectionFailedListener)
             .addApi(com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API, googleSignInOptions)
+            .addApi(com.google.android.gms.appinvite.AppInvite.API)
             .build();
 
         var signInIntent = com.google.android.gms.auth.api.Auth.GoogleSignInApi.getSignInIntent(firebase._mGoogleApiClient);
@@ -1768,6 +1770,101 @@ firebase.sendCrashLog = function (arg) {
       resolve();
     } catch (ex) {
       console.log("Error in firebase.sendCrashLog: " + ex);
+      reject(ex);
+    }
+  });
+};
+
+firebase.sendInvitation = function (arg) {
+  return new Promise(function (resolve, reject) {
+    try {
+
+      if (typeof(com.google.android.gms.appinvite) === "undefined") {
+        reject("Make sure firebase-invites is in the plugin's include.gradle");
+        return;
+      }
+
+      if (!arg.message || !arg.title) {
+        reject("The mandatory 'message' or 'title' argument is missing");
+        return;
+      }
+
+      var firebaseInviteIntent = new com.google.android.gms.appinvite.AppInviteInvitation.IntentBuilder(arg.title).setMessage(arg.message);
+      
+      if (arg.deepLink) {
+        firebaseInviteIntent.setDeepLink(decodeURIComponent(arg.deepLink))
+      }
+
+      if (arg.callToActionText) {
+        firebaseInviteIntent.setCallToActionText(arg.callToActionText)
+      }
+
+      if (arg.customImage) {
+        firebaseInviteIntent.setCustomImage(decodeURIComponent(arg.customImage))
+      }
+
+      firebaseInviteIntent.build()
+
+      appModule.android.currentContext.startActivityForResult(firebaseInviteIntent, REQUEST_INVITE_INTENT_ID);
+      
+      resolve();
+    } catch (ex) {
+      console.log("Error in firebase.sendInvitation: " + ex);
+      reject(ex);
+    }
+  });
+};
+
+firebase.getInvitation = function () {
+  return new Promise(function (resolve, reject) {
+    try {
+
+      if (typeof(com.google.android.gms.appinvite) === "undefined") {
+        reject("Make sure firebase-invites is in the plugin's include.gradle");
+        return;
+      }
+
+      var autoLaunchDeepLink = false;
+      var activity = appModule.android.foregroundActivity;
+      
+      com.google.android.gms.appinvite.AppInvite.AppInviteApi.getInvitation(firebase._mGoogleApiClient, activity, autoLaunchDeepLink)
+         .setResultCallback(
+          new com.google.android.gms.common.api.ResultCallback({
+            onResult: function(result){
+
+              console.log("getInvitation:onResult:" + result.getStatus())
+              if (result.getStatus().isSuccess()) {
+                // Extract information from the intent
+                var intent = result.getInvitationIntent();
+
+                try {
+
+                  var deepLink = com.google.android.gms.appinvite.AppInviteReferral.getDeepLink(intent);
+                  var invitationId = com.google.android.gms.appinvite.AppInviteReferral.getInvitationId(intent);
+
+                  resolve({
+                    deepLink: deepLink,
+                    invitationId: invitationId
+                  })
+
+                } catch (e) {
+                  reject(e.getMessage())
+                }
+                
+              }
+              else {
+                reject("Not launched by invitation")
+              }
+            }
+          })
+          //  new com.google.android.gms.appinvite.AppInviteInvitationResult({
+          //   onResult: function(result) {
+          //     callback(JSON.parse(result));
+          //   }
+          // })
+         );
+    } catch (ex) {
+      console.log("Error in firebase.sendInvitation: " + ex);
       reject(ex);
     }
   });
