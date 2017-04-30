@@ -928,7 +928,6 @@ firebase.login = function (arg) {
         firebase._mGoogleApiClient = new com.google.android.gms.common.api.GoogleApiClient.Builder(com.tns.NativeScriptApplication.getInstance())
             .addOnConnectionFailedListener(onConnectionFailedListener)
             .addApi(com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API, googleSignInOptions)
-            .addApi(com.google.android.gms.appinvite.AppInvite.API)
             .build();
 
         var signInIntent = com.google.android.gms.auth.api.Auth.GoogleSignInApi.getSignInIntent(firebase._mGoogleApiClient);
