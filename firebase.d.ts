@@ -492,6 +492,16 @@ export interface SendInvitationOptions {
      * Sets the URL of a custom image to include in email invitations. The image must be square and around 600x600 pixels. The image can be no larger than 4000x4000 pixels.
      */
     customImage?: string;
+
+    /**
+     * If you have an Android version of your app and you want to send an invitation that can be opened on Android in addition to iOS
+     */
+    androidClientID?: string;
+
+    /**
+     * You can find your iOS app's client ID in the GoogleService-Info.plist file you downloaded from the Firebase console
+     */
+    iosClientID?: string;
 }
 
 export function init(options?: InitOptions): Promise<any>;

@@ -1795,11 +1795,15 @@ firebase.sendInvitation = function (arg) {
       }
 
       if (arg.callToActionText) {
-        firebaseInviteIntent.setCallToActionText(arg.callToActionText)
+        builder.setCallToActionText(arg.callToActionText)
       }
 
       if (arg.customImage) {
-        firebaseInviteIntent.setCustomImage(android.net.Uri.parse(arg.customImage))
+        builder.setCustomImage(android.net.Uri.parse(arg.customImage))
+      }
+
+      if (arg.iosClientID) {
+        builder.setOtherPlatformsTargetApplication(com.google.android.gms.appinvite.AppInviteInvitation.IntentBuilder.PlatformMode.PROJECT_PLATFORM_IOS, arg.iosClientID);
       }
 
       var firebaseInviteIntent = builder.build()
